@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+ --bg:#070b14;--card:#121a2c;--card2:#1a2439;--text:#f3f6fd;--muted:#8793ad;--line:#223049;
+ --bar:rgba(10,15,26,.88);--accent:#14b8a6;--accent2:#22d3ee;--accent-soft:rgba(20,184,166,.18);--red:#f87171;--amber:#fbbf24;--green:#34d399;
+ color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)
+}
+@media (prefers-color-scheme:light){
+ :root:not([data-theme="dark"]){--bg:#eef1f8;--card:#ffffff;--card2:#f3f6fb;--text:#0f172a;--muted:#64748b;--line:#e4e9f2;--bar:rgba(255,255,255,.9);--accent-soft:rgba(20,184,166,.14);--red:#dc2626;--green:#059669;color-scheme:light}
+}
+:root[data-theme="light"]{--bg:#eef1f8;--card:#ffffff;--card2:#f3f6fb;--text:#0f172a;--muted:#64748b;--line:#e4e9f2;--bar:rgba(255,255,255,.9);--accent-soft:rgba(20,184,166,.14);--red:#dc2626;--green:#059669;color-scheme:light}
+
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain;margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:1.5rem;box-shadow:0 10px 30px -18px rgba(0,0,0,.5)}
+.muted{color:var(--muted)}
+.grad{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes ping2{0%{box-shadow:0 0 0 0 rgba(20,184,166,.45)}100%{box-shadow:0 0 0 14px rgba(20,184,166,0)}}
+@keyframes slideL{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+@keyframes slideR{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+.sheet{animation:up .34s cubic-bezier(.2,.9,.25,1)}
+.back{animation:fade .25s ease}
+.item{animation:pop .45s cubic-bezier(.2,.9,.25,1) both}
+.slideL{animation:slideL .28s cubic-bezier(.2,.9,.25,1)}
+.slideR{animation:slideR .28s cubic-bezier(.2,.9,.25,1)}
+.seg{transition:stroke-dasharray 1s cubic-bezier(.2,.9,.25,1),stroke-dashoffset 1s cubic-bezier(.2,.9,.25,1),stroke .4s}
+.bar{transition:width .9s cubic-bezier(.2,.9,.25,1)}
+.fab{animation:ping2 2.4s ease-out infinite}
+button{touch-action:manipulation}
+input::placeholder{color:var(--muted)}
