@@ -45,5 +45,52 @@ git push -u origin main
 4. **Deploy** butonuna bas. Birkaç saniye içinde canlı bir `https://finanscep-xxxx.vercel.app` bağlantısı alırsın.
 5. `main` dalına her `git push` yaptığında Vercel otomatik olarak yeniden yayınlar.
 
+## Giriş ekranı ve güvenlik kurulumu
+
+Uygulamaya tek kullanıcılı (yalnızca `admin`), sunucu taraflı doğrulanan bir giriş ekranı eklendi. Şifre kontrolü **tarayıcıda değil**, Vercel'in sunucusuz fonksiyonlarında (`/api/login.js`) yapılır; bu yüzden sayfa kaynağına bakarak atlatılamaz.
+
+### 1. Vercel'de ortam değişkenlerini ayarla
+Proje panelinde **Settings → Environment Variables** yoluna git ve şunları ekle (Production + Preview):
+
+| Değişken | Değer |
+|---|---|
+| `ADMIN_USERNAME` | `admin` |
+| `ADMIN_PASSWORD_HASH` | aşağıda üretilecek hash |
+| `SESSION_SECRET` | aşağıda üretilecek rastgele anahtar |
+
+Bu projeyi senin için hazırlarken örnek bir şifre ve hash ürettim (terminal çıktısında gördün). **O şifreyi kullanmak istemiyorsan**, kendi bilgisayarında Node ile yeni bir tane üretebilirsin:
+
+```bash
+node -e "
+const crypto=require('crypto');
+const pass=process.argv[1];
+const salt=crypto.randomBytes(16);
+const hash=crypto.scryptSync(pass,salt,64,{N:16384,r:8,p:1});
+console.log('ADMIN_PASSWORD_HASH=scrypt:16384:8:1:'+salt.toString('hex')+':'+hash.toString('hex'));
+" "BURAYA_KENDI_GUCLU_SIFREN"
+```
+
+`SESSION_SECRET` için:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+**Önemli:** `ADMIN_PASSWORD_HASH` ve `SESSION_SECRET` asla git deposuna veya koda yazılmaz — yalnızca Vercel'in ortam değişkenleri panelinde durur. `.env.example` sadece biçimi gösterir.
+
+### 2. Alınan önlemler
+- **Injection:** Uygulamada hiçbir SQL/NoSQL sorgusu kurulmuyor; şifre doğrudan `scrypt` ile hash karşılaştırmasına giriyor, bu yüzden klasik SQL/NoSQL injection vektörü yapısal olarak yok.
+- **Brute-force:** Aynı IP+kullanıcı adı 15 dakikada 5 başarısız denemeden sonra 15 dakika kilitlenir (`api/_auth.js`).
+- **Zamanlama saldırıları:** Kullanıcı adı yanlış olsa bile sahte bir hash ile aynı sürede `scrypt` karşılaştırması yapılır; tüm karşılaştırmalar `crypto.timingSafeEqual` ile sabit zamanlıdır.
+- **Kullanıcı adı sızdırma (enumeration):** Hatalı girişlerde her zaman aynı genel mesaj döner ("Kullanıcı adı veya şifre hatalı").
+- **Oturum çerezi:** `HttpOnly` (JS ile okunamaz → XSS ile çalınamaz), `Secure` (yalnızca HTTPS), `SameSite=Strict` (CSRF'e kapalı), 12 saatte sona erer.
+- **CSRF:** Giriş isteğinin `Origin`/`Referer` başlığı sitenin kendi alan adıyla eşleşmiyorsa istek reddedilir.
+- **Güvenlik başlıkları:** `vercel.json` içinde CSP, HSTS, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` tanımlı.
+- **Fail-closed:** Ortam değişkenleri eksikse (`SESSION_SECRET` veya `ADMIN_PASSWORD_HASH` yoksa) sistem kimseyi içeri almaz, hata verir — "açık kapı" bırakmaz.
+
+### 3. Dürüst sınırlar (bunları bilmelisin)
+- **Veriler yine de yalnızca tarayıcıda (`localStorage`) tutulur.** Giriş ekranı, uygulamayı kimin açabileceğini kontrol eder; sunucuda saklanan bir veri olmadığı için teknik olarak "çalınacak" bir veritabanı da yoktur. Farklı cihaz/tarayıcıda giriş yapsan bile o cihazın kendi (muhtemelen boş) verisini görürsün.
+- Bellek içi hız sınırlama, fonksiyon "soğuk başlarsa" (uzun süre kullanılmayan bir deploy'da) sıfırlanabilir. Kalıcı/çok bölgeli hız sınırlama istersen Vercel panelinden **Storage → Create Database → KV** ekleyip `api/_auth.js` içindeki sayaçları oraya taşımak gerekir — istersen bunu da ekleyebilirim.
+- Bu kurulum kişisel/hobi projeler için güçlü ve gerçekçi bir savunma sağlar; bankacılık seviyesinde "kırılamaz" bir sistem değildir (örn. çok faktörlü doğrulama, WAF, 7/24 izleme içermez).
+
 ## Not
 Tüm veriler yalnızca kullanıcının kendi tarayıcısında (`localStorage`) tutulur; hiçbir veri bir sunucuya gönderilmez. Farklı bir cihaz veya tarayıcıda açıldığında veriler görünmez — bu normaldir.

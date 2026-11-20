@@ -1,7 +1,7 @@
 import Sheet from './Sheet.jsx'
 import { tl, monthLabel } from '../lib/utils'
 
-export default function SettingsSheet({ ym, eff, onOpenBudget, onSeed, conf, setConf, onReset, onClose }) {
+export default function SettingsSheet({ ym, eff, onOpenBudget, onSeed, conf, setConf, onReset, onClose, onLogout }) {
   return (
     <Sheet title="Ayarlar" onClose={onClose}>
       <button onClick={onOpenBudget} className="w-full h-14 rounded-2xl px-4 flex items-center justify-between mb-2 active:scale-[.98] transition" style={{ background: 'var(--card2)' }}>
@@ -18,6 +18,11 @@ export default function SettingsSheet({ ym, eff, onOpenBudget, onSeed, conf, set
       >
         {conf ? 'Emin misin? Tekrar dokun' : 'Tüm verileri sıfırla'}
       </button>
+      {onLogout && (
+        <button onClick={onLogout} className="w-full h-14 rounded-2xl px-4 text-left font-semibold mt-2 active:scale-[.98] transition" style={{ background: 'var(--card2)', color: 'var(--muted)' }}>
+          Çıkış yap
+        </button>
+      )}
     </Sheet>
   )
 }
